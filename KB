@@ -1,0 +1,8 @@
+Ldap search, Tested with openldap-clients-2.6.6-3.el9.x86_64
+
+Note: the output is limited to: # numResponses: 1001 ; # numEntries: 1000, in our Realm.
+
+1) List all object : ldapsearch -b "dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net "(&(objectClass=*))"
+2) CommonName and OU:  ldapsearch -b "CN=YourCommnName,OU=YourOU,OU=yourOU,OU=Management,dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net "(&(objectClass=*))"
+3) Organization unit : ldapsearch -b "OU=yourOU,dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net "(&(objectClass=*))"
+4) 
