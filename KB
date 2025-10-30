@@ -1,8 +1,18 @@
+LDAP: Lightweight Directory Access Protocol
+
 Ldap search, Tested with openldap-clients-2.6.6-3.el9.x86_64
 
 Note: the output is limited to: # numResponses: 1001 ; # numEntries: 1000, in our Realm.
 
-1) List all object : ldapsearch -b "dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net "(&(objectClass=*))"
-2) CommonName and OU:  ldapsearch -b "CN=YourCommnName,OU=YourOU,OU=yourOU,OU=Management,dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net "(&(objectClass=*))"
-3) Organization unit : ldapsearch -b "OU=yourOU,dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net "(&(objectClass=*))"
-4) 
+1) List all object : ldapsearch -b "dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
+2) CommonName and OU:  ldapsearch -b "CN=YourCommnName,OU=YourOU,OU=yourOU,OU=Management,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
+3) Organization unit : ldapsearch -b "OU=yourOU,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
+4) Host search: ldapsearch -b "CN=Computers,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
+5) User Lastname,FirstName: ldapsearch -b "CN=Lastname\, Firstname,OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
+6) All users in OU: ldapsearch -b "OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
+7) Member of:  ldapsearch -b "CN=Munegowda\, Manjesh,OU=IT,OU=Accounts,DC=LPCH,DC=NET" -D "YourAD\mmunegowda" -x -W -h ldap.your.Domain "(memberOf=*)"
+
+
+
+SSSD: System Security Services Daemon 
+KB Coming soon...
