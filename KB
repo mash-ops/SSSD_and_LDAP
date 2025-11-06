@@ -2,7 +2,8 @@ LDAP: Lightweight Directory Access Protocol
 
 Ldap search, Tested with openldap-clients-2.6.6-3.el9.x86_64
 
-Note: the output is limited to: # numResponses: 1001 ; # numEntries: 1000, in our Realm.
+Note: The output is limited to: # numResponses: 1001 ; # numEntries: 1000, in our Realm.
+      Following are working with LDAPv3
 
 1) List all object : ldapsearch -b "dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
 2) CommonName and OU:  ldapsearch -b "CN=YourCommnName,OU=YourOU,OU=yourOU,OU=Management,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
@@ -10,16 +11,158 @@ Note: the output is limited to: # numResponses: 1001 ; # numEntries: 1000, in ou
 4) Host search: ldapsearch -b "CN=Computers,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
 5) User Lastname,FirstName: ldapsearch -b "CN=Lastname\, Firstname,OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
 6) All users in OU: ldapsearch -b "OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
-7) Member of:  ldapsearch -b "CN=Munegowda\, Manjesh,OU=IT,OU=Accounts,DC=LPCH,DC=NET" -D "YourAD\mmunegowda" -x -W -h ldap.your.Domain "(memberOf=*)"
-8) List Domain controllers:  ldapsearch -b "ou=Domain Controllers,dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net  "(sAMAccountName=*)" dn
-9) Domain server: ldapsearch -D "lpch\mmunegowda" -x -W -h ldap.your.Domain -s sub -b "OU=Datacenter Servers,DC=LPCH,DC=NET" CN="serverName"
-10) List all server: ldapsearch -D "lpch\mmunegowda" -x -W -h ldap.your.Domain -s sub -b "ou=servers,DC=LPCH,DC=NET" objectclass="*"
-11) UserName and Email: ldapsearch -b "dc=LPCH,dc=NET" -D "lpch\mmunegowda" -W -h ldap.lpch.net -s sub -x "(objectclass=*)" sn cn
+7) Member of:  ldapsearch -b "CN=Munegowda\, Manjesh,OU=IT,OU=Accounts,dc=Your,dc=Domain" -D "YourAD\mmunegowda" -x -W -h ldap.your.Domain "(memberOf=*)"
+8) List Domain controllers:  ldapsearch -b "ou=Domain Controllers,dc=Your,dc=Domain" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net  "(sAMAccountName=*)" dn
+9) Domain server: ldapsearch -D "lpch\mmunegowda" -x -W -h ldap.your.Domain -s sub -b "OU=Datacenter Servers,dc=Your,dc=Domain" CN="serverName"
+10) List all server: ldapsearch -D "lpch\mmunegowda" -x -W -h ldap.your.Domain -s sub -b "ou=servers,dc=Your,dc=Domain" objectclass="*"
+11) UserName and Email: ldapsearch -b "dc=Your,dc=Domain" -D "lpch\mmunegowda" -W -h ldap.lpch.net -s sub -x "(objectclass=*)" sn cn
 
 Search using Lastname, Firstname (from Input file):
-1)  count=1; while IFS= read -r lines; do echo -n "[$count] : processing : $lines" ; ldapsearch -b "dc=LPCH,dc=NET" -D "AD\mmunegowda" -w $lpass -h ldap.your.Domain -x "(name=$lines)" name mail ; ((count++)); done < users_lastName_FirstName
+1)  count=1; while IFS= read -r lines; do echo -n "[$count] : processing : $lines" ; ldapsearch -b "dc=Your,dc=Domain" -D "AD\mmunegowda" -w $lpass -h ldap.your.Domain -x "(name=$lines)" name mail ; ((count++)); done < users_lastName_FirstName
 
+Filters:
+1) ldapsearch -b "dc=Your,dc=Domain" -D "AD\mmunegowda" -W -h ldap.your.Domain -x "(name=Lastname, Firstname)" name mail
+2) ldapsearch -b "dc=Your,dc=Domain" -D "AD\mmunegowda" -W -h ldap.your.Domain -s sub -x "(objectclass=*)" creatorsName createTimestamp modifiersName modifyTimestamp
+3) ldapsearch -b "dc=Your,dc=Domain" -D "AD\mmunegowda" -W -h ldap.your.Domain -s sub -x "(objectclass=*)" '+'
+4) ldapsearch -b "dc=Your,dc=Domain" -D "AD\mmunegowda" -W -h ldap.your.Domain -s sub -x "(objectclass=*)" sn cn
 
 
 SSSD: System Security Services Daemon 
-KB Coming soon...
+Prerequisite:
+  # dnf install adcli realmd sssd oddjob oddjob-mkhomedir samba-common-tools krb5-workstation authselect-compat
+
+Pre Check:
+Ref: https://access.redhat.com/solutions/5444941 (Need RedHat user account to access)
+1. Ensure that the user you use to join with Active Directory has the following user permissions:
+
+  - On the object types:  
+     * Computer
+  
+  - Standard permissions required for joining all systems to an AD:
+     * Reset password
+     * Read account restrictions
+     * Write account restrictions
+     * Validated write to DNS host name
+     * Validated write to service principal name
+  
+  - Additional permissions required for joining Linux systems to an AD:
+     * Read DNS host name attributes
+     * Write DNS host name attributes
+     * Read DNSHostName
+     * Write DNSHostName
+     * Read msDS-AddtionalSamAccountName
+     * Write msDS-AddtionalSamAccountName
+     * Read msDS-SupportedEncryptionTypes
+     * Write msDS-SupportedEncryptionTypes
+     * Read Operating System
+     * Write Operating System
+     * Read Operating System Version
+     * Write Operating System Version
+     * Read OperatingSystemServicePack
+     * Write OperatingSystemServicePack
+     * Read servicePrincipalName
+     * Write servicePrincipalName
+     * Read userAccountControl
+     * Write userAccountControl
+     * Read userPrincipal Name
+     * Write userPrincipal Name
+
+2. DNS lookup of AD is resolving.
+    # dig +short SRV _ldap._tcp.addomain.test
+    # dig +short SRV _kerberos._tcp.addomain.test
+    # dig +short SRV _kerberos._udp.addomain.test
+
+3. Port reach ability from RHEL to Active Directory servers.
+    Source port -    Destination -    Protocol      - Service
+    1024:65535  -    53          -    TCP and UDP   - DNS
+    1024:65535  -    389         -    TCP and UDP   - LDAP
+    1024:65535  -    636         -    TCP           - LDAPS
+    1024:65535  -    88          -    TCP and UDP   - Kerberos
+    1024:65535  -    464         -    TCP and UDP   - Kerberos change/set password (kadmin)
+    1024:65535  -    3268        -    TCP           - LDAP Global Catalog (If "id_provider = ad" is being used)
+    1024:65535  -    3269        -    TCP           - LDAP Global Catalog SSL
+    1024:65535  -    123         -    UDP           - NTP (Optional)
+
+Validate if all ports listed are reachable to Active Directory servers which are part of AD domain.
+Bash script to validate: https://github.com/mash-ops/myBASH/blob/master/ActiveDirectory_preCheck.bash
+
+After above checks, steps to join the rhel client to AD (ActiveDirectory):
+  # realm discover your.Domain
+  # realm -v join --client-software=sssd your.Domain -U AD_account*
+    *see Pre check to ensure the account has permission, -v is verbose
+  # realm list ; getent passwd AD_User (this should return the AD user account details)
+  # Adjust /etc/sssd/sssd.conf to your domain needs, if you modify, systemctl restart sssd
+
+Caveat:
+  1) Home directory being created with user@your.domain
+     By Default in /etc/sssd/sssd.conf fallback_homedir = /home/%u@%d
+     Resolution: fallback_homedir = /home/%u
+       
+  2) Sudo -s ==> slowness on RHEL 9 client joined to AD.
+     Resolution: Add the following under [domain/your.Domain] section in /etc/sssd/sssd.conf
+                ad_gpo_access_control = permissive
+                ad_gpo_ignore_unreadable = True
+                ignore_group_members = true
+                subdomain_inherit = ignore_group_members
+                dyndns_update = False
+
+  3) [Pre-authentication failed: Cannot read password] filling up /var/log/sssd/krb5_child.log
+     Ref: https://access.redhat.com/solutions/7059267
+     Resolution: Add the following under [pam] section in /etc/sssd/sssd.conf
+                 if [pam] does not exist add a section, and systemctl restart sssd
+                  [pam]
+                  pam_passkey_auth = False
+
+  4) TSIG error with server: tsig verify failure messages in sssd logs
+     Note: we are not using DHCP, hence turning it to false (Default is True)
+     Resolution: Add the following under [domain/your.Domain] section in /etc/sssd/sssd.conf
+                 dyndns_update = False
+
+Debugging:
+  1) dnf install sssd-tools (for command /usr/sbin/sssctl) 
+     Version (2.9.4-6.el9_4.1) has following Available commands:
+      
+      SSSD Status:
+      * domain-list            List available domains
+      * domain-status          Print information about domain
+      * user-checks            Print information about a user and check authentication
+      * access-report          Generate access report for a domain
+      
+      Information about cached content:
+      * user-show              Information about cached user
+      * group-show             Information about cached group
+      * netgroup-show          Information about cached netgroup
+      
+      Local data tools:
+      * client-data-backup     Backup local data
+      * client-data-restore    Restore local data from backup
+      * cache-remove           Backup local data and remove cached content
+      * cache-upgrade          Perform cache upgrade
+      * cache-expire           Invalidate cached objects
+      * cache-index            Manage cache indexes
+      
+      Log files tools:
+      * logs-remove            Remove existing SSSD log files
+      * logs-fetch             Archive SSSD log files in tarball
+      * debug-level            Change or print information about SSSD debug level
+      * analyze                Analyze logged data
+      
+      Configuration files tools:
+      * config-check           Perform static analysis of SSSD configuration
+      
+      Certificate related tools:
+      * cert-show              Print information about the certificate
+      * cert-map               Show users mapped to the certificate
+      * cert-eval-rule         Check mapping and matching rule with a certificate
+      
+      Passkey related tools:
+      * passkey-register       Perform passkey registration
+      
+      Help options:
+        -?, --help             Show this for a command
+        --usage                Show brief usage message for a command
+      
+      Debug options:
+        --debug                Enable debug log level of sssctl tool
+
+     
