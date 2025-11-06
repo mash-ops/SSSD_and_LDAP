@@ -11,6 +11,13 @@ Note: the output is limited to: # numResponses: 1001 ; # numEntries: 1000, in ou
 5) User Lastname,FirstName: ldapsearch -b "CN=Lastname\, Firstname,OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
 6) All users in OU: ldapsearch -b "OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
 7) Member of:  ldapsearch -b "CN=Munegowda\, Manjesh,OU=IT,OU=Accounts,DC=LPCH,DC=NET" -D "YourAD\mmunegowda" -x -W -h ldap.your.Domain "(memberOf=*)"
+8) List Domain controllers:  ldapsearch -b "ou=Domain Controllers,dc=LPCH,dc=NET" -D "lpch\mmunegowda" -x -W -h ldap.lpch.net  "(sAMAccountName=*)" dn
+9) Domain server: ldapsearch -D "lpch\mmunegowda" -x -W -h ldap.your.Domain -s sub -b "OU=Datacenter Servers,DC=LPCH,DC=NET" CN="serverName"
+10) List all server: ldapsearch -D "lpch\mmunegowda" -x -W -h ldap.your.Domain -s sub -b "ou=servers,DC=LPCH,DC=NET" objectclass="*"
+11) UserName and Email: ldapsearch -b "dc=LPCH,dc=NET" -D "lpch\mmunegowda" -W -h ldap.lpch.net -s sub -x "(objectclass=*)" sn cn
+
+Search using Lastname, Firstname (from Input file):
+1)  count=1; while IFS= read -r lines; do echo -n "[$count] : processing : $lines" ; ldapsearch -b "dc=LPCH,dc=NET" -D "AD\mmunegowda" -w $lpass -h ldap.your.Domain -x "(name=$lines)" name mail ; ((count++)); done < users_lastName_FirstName
 
 
 
