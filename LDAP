@@ -1,0 +1,30 @@
+              [ LDAP: Lightweight Directory Access Protocol ]
+
+Ldap search, Tested with openldap-clients-2.6.6-3.el9.x86_64
+Note: The output is limited to: # numResponses: 1001 ; # numEntries: 1000, in our Realm.
+      Following are working with LDAPv3
+
+1) List all object : ldapsearch -b "dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
+2) CommonName and OU:  ldapsearch -b "CN=YourCommnName,OU=YourOU,OU=yourOU,OU=Management,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
+3) Organization unit : ldapsearch -b "OU=yourOU,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(&(objectClass=*))"
+4) Host search: ldapsearch -b "CN=Computers,dc=Your,dc=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
+5) User Lastname,FirstName: ldapsearch -b "CN=Lastname\, Firstname,OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
+6) All users in OU: ldapsearch -b "OU=IT,OU=Accounts,DC=Your,DC=DOMAIN" -D "YourAD\manjesh" -x -W -h ldap.your.Domain
+7) Member of:  ldapsearch -b "CN=Lastname\, Firstname,OU=IT,OU=Accounts,dc=Your,dc=Domain" -D "YourAD\manjesh" -x -W -h ldap.your.Domain "(memberOf=*)"
+8) List Domain controllers:  ldapsearch -b "ou=Domain Controllers,dc=Your,dc=Domain" -D "YourAD\manjesh" -x -W -h ldap.lpch.net  "(sAMAccountName=*)" dn
+9) Domain server: ldapsearch -D "YourAD\manjesh" -x -W -h ldap.your.Domain -s sub -b "OU=Datacenter Servers,dc=Your,dc=Domain" CN="serverName"
+10) List all server: ldapsearch -D "YourAD\manjesh" -x -W -h ldap.your.Domain -s sub -b "ou=servers,dc=Your,dc=Domain" objectclass="*"
+11) UserName and Email: ldapsearch -b "dc=Your,dc=Domain" -D "YourAD\manjesh" -W -h ldap.lpch.net -s sub -x "(objectclass=*)" sn cn
+
+Search using Lastname, Firstname (from Input file):
+1)  count=1; while IFS= read -r lines; do echo -n "[$count] : processing : $lines" ; ldapsearch -b "dc=Your,dc=Domain" -D "YourAD\manjesh" -w $lpass -h ldap.your.Domain -x "(name=$lines)" name mail ; ((count++)); done < users_lastName_FirstName
+
+Filters:
+1) ldapsearch -b "dc=Your,dc=Domain" -D "YourAD\manjesh" -W -h ldap.your.Domain -x "(name=Lastname, Firstname)" name mail
+2) ldapsearch -b "dc=Your,dc=Domain" -D "YourAD\manjesh" -W -h ldap.your.Domain -s sub -x "(objectclass=*)" creatorsName createTimestamp modifiersName modifyTimestamp
+3) ldapsearch -b "dc=Your,dc=Domain" -D "YourAD\manjesh" -W -h ldap.your.Domain -s sub -x "(objectclass=*)" '+'
+4) ldapsearch -b "dc=Your,dc=Domain" -D "YourAD\manjesh" -W -h ldap.your.Domain -s sub -x "(objectclass=*)" sn cn
+
+
+
+  
