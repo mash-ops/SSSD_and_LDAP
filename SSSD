@@ -1,6 +1,7 @@
                 [ SSSD: System Security Services Daemon ]
 
-Reference: (Some of them need RedHat user account to access)
+Architecture: https://sssd.io/docs/architecture.html
+Reference   : (Some of them need RedHat user account to access)
   1) https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/integrating_rhel_systems_directly_with_windows_active_directory/index#connecting-rhel-systems-directly-to-ad-using-sssd_integrating-rhel-systems-directly-with-active-directory
   2) How to join RHEL to Active Directory using realmd ==>
       https://access.redhat.com/solutions/1350723
@@ -16,9 +17,39 @@ Reference: (Some of them need RedHat user account to access)
   7) Understanding SSSD and its benefits
       https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/configuring_authentication_and_authorization_in_rhel/understanding-sssd-and-its-benefits_configuring-authentication-and-authorization-in-rhel
 
-
-Prerequisite to join rhel client to AD:
+Prerequisite packages to join rhel client to AD (RHEL 9):
   # dnf install adcli realmd sssd oddjob oddjob-mkhomedir samba-common-tools krb5-workstation authselect-compat
+
+    realm : part of realmd package, Kerberos realm enrollment service
+    adcli : part of adcli package, tool for joining an Active Directory domain using standard LDAP and Kerberos calls.
+    net   : part of samba-common-tools, contains tools for SMB/CIFS clients.
+    sssctl: part of sssd-tools, Provides userspace tools for manipulating users, groups, and nested groups in
+                            SSSD when using id_provider = local in /etc/sssd/sssd.conf
+                            Also provides several other administrative tools:
+                                * sss_debuglevel to change the debug level on the fly
+                                * sss_seed which pre-creates a user entry for use in kickstarts
+                                * sss_obfuscate for generating an obfuscated LDAP password
+                                * sssctl -- an sssd status and control utility
+
+Logs:
+    COMMAND  NAME                                DESCRIPTION
+    sssd     /var/log/sssd/sssd.log              [System Security Services Daemon, service log]
+    sssd_be  /var/log/sssd/sssd_YOUR.REALM.log   [backend process]
+    sssd_nss /var/log/sssd/sssd_nss.log          [Name Service Switch responder]
+    sssd_pam /var/log/sssd/sssd_pam.log          [Pluggable Authentication Modules responder]
+    sssd_pac /var/log/sssd/sssd_pac.log          [Privilege Attribute Certificates responder]
+
+    krb5_child.log: log file for the short-lived helper process involved in Kerberos authentication
+    ldap_child.log: log file for the short-lived helper process involved in communicating with the LDAP server
+    selinux_child.log: log file for the short-lived helper process that retrieves SELinux information
+    sssd.log: log file for SSSD communicating with its responder processes
+    sssd_[domain].log: each SSSD domain section logs information about communication with the LDAP server to a separate log file
+    sssd_ifp.log: log file for the InfoPipe responder, provides a public D-Bus interface accessible over the system bus
+    sssd_nss.log: log file for the Name Services Switch (NSS) responder that retrieves user and group information
+    sssd_pac.log: log file for the Microsoft Privilege Attribute Certificate (PAC) responder service that defines how SSSD works with Kerberos to manage Active Directory users and groups
+    sssd_pam.log: log file for the Pluggable Authentication Module (PAM) responder
+    sssd_ssh.log: log file for the SSH responder process
+    The /var/log/secure file logs authentication failures and the reason for the failure.
 
 Pre Check:
 Ref: https://access.redhat.com/solutions/5444941 (Need RedHat user account to access)
@@ -107,6 +138,49 @@ Caveat:
      Resolution: Add the following under [domain/your.Domain] section in /etc/sssd/sssd.conf
                  dyndns_update = False
 
+Realmd Package:
+  Summary     : Kerberos realm enrollment service
+  Description :
+    realmd is a DBus system service which manages discovery and enrollment in realms
+    and domains like Active Directory or IPA. The control center uses realmd as the
+    back end to 'join' a domain simply and automatically configure things correctly.
+  1) realm list
+  2) Realm commands
+         realm discover -v [realm-name]
+           Discover available realm
+         realm join -v [-U user] realm-name
+           Enroll this machine in a realm
+         realm leave -v [-U user] [realm-name]
+           Unenroll this machine from a realm
+         realm list
+           List known realms
+         realm permit [-ax] [-R realm] user ...
+           Permit user logins
+         realm deny --all [-R realm]
+           Deny user logins
+
+adcli Tool : adcli is a tool for joining an Active Directory domain using
+             standard LDAP and Kerberos calls.
+    1) adcli -v info Your.Realm
+    2) adcli show-computer hostname -D Your.Realm -U AD_Admin
+    3) Common adcli commands are:
+              info             Print information about a domain
+              join             Join this machine to a domain
+              update           Update machine membership in a domain
+              testjoin         Test if machine account password is valid
+              preset-computer  Pre setup computers accounts
+              reset-computer   Reset a computer account
+              delete-computer  Delete a computer account
+              show-computer    Show computer account attributes stored in AD
+              create-msa       Create a managed service account in the given AD domain
+              create-user      Create a user account
+              delete-user      Delete a user account
+              passwd-user      (Re)set a user password
+              create-group     Create a group
+              delete-group     Delete a group
+              add-member       Add users to a group
+              remove-member    Remove users from a group
+
 Debugging:
   1) dnf install sssd-tools (for command /usr/sbin/sssctl) 
      Version (2.9.4-6.el9_4.1) has following Available commands:
@@ -153,47 +227,3 @@ Debugging:
       
       Debug options:
         --debug                Enable debug log level of sssctl tool
-
-
-adcli Tool : adcli is a tool for joining an Active Directory domain using
-        standard LDAP and Kerberos calls.
-    1) adcli -v info Your.Realm
-    2) adcli show-computer hostname -D Your.Realm -U AD_Admin
-    3) Common adcli commands are:
-              info             Print information about a domain
-              join             Join this machine to a domain
-              update           Update machine membership in a domain
-              testjoin         Test if machine account password is valid
-              preset-computer  Pre setup computers accounts
-              reset-computer   Reset a computer account
-              delete-computer  Delete a computer account
-              show-computer    Show computer account attributes stored in AD
-              create-msa       Create a managed service account in the given AD domain
-              create-user      Create a user account
-              delete-user      Delete a user account
-              passwd-user      (Re)set a user password
-              create-group     Create a group
-              delete-group     Delete a group
-              add-member       Add users to a group
-              remove-member    Remove users from a group
-
-Realmd Package:
-  Summary     : Kerberos realm enrollment service
-  Description :
-    realmd is a DBus system service which manages discovery and enrollment in realms
-    and domains like Active Directory or IPA. The control center uses realmd as the
-    back end to 'join' a domain simply and automatically configure things correctly.
-  1) realm list
-  2) Realm commands
-         realm discover -v [realm-name]
-           Discover available realm
-         realm join -v [-U user] realm-name
-           Enroll this machine in a realm
-         realm leave -v [-U user] [realm-name]
-           Unenroll this machine from a realm
-         realm list
-           List known realms
-         realm permit [-ax] [-R realm] user ...
-           Permit user logins
-         realm deny --all [-R realm]
-           Deny user logins
