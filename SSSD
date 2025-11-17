@@ -1,4 +1,9 @@
-                [ SSSD: System Security Services Daemon ]
+               ____ ____ ____  ____  
+              / ___/ ___/ ___||  _ \ 
+              \___ \___ \___ \| | | |
+               ___) |__) |__) | |_| |
+              |____/____/____/|____/ 
+      [ SSSD: System Security Services Daemon ]
 
 Architecture: https://sssd.io/docs/architecture.html
 Reference   : (Some of them need RedHat user account to access)
@@ -227,3 +232,38 @@ Debugging:
       
       Debug options:
         --debug                Enable debug log level of sssctl tool
+
+Issue and Remediation:
+1) [sssd[ldap_child[]]]: Failed to initialize credentials using keytab [MEMORY:/etc/krb5.keytab]: Preauthentication failed. Unable to create GSSAPI-encrypted LDAP connection.
+
+Reference: https://access.redhat.com/solutions/3380341
+Reason: 
+  The error message (see above) is produced when the client keytab is out of sync with the Active Directory server. The keytab is normally refreshed periodically or when SSSD is restarted.
+
+If a restart of SSSD does not refresh the keytab and resolve the issue, the following methods can be used to manually update the keytab:
+  a) Refresh the keytab using adcli (recommended)
+  b) Leave and rejoin the domain with realmd
+  c) Leave and rejoin the domain with adcli
+
+Remediation: (Always backup /etc/sssd/sssd.conf, and restore it if required)
+	a) Refresh the keytab using adcli (recommended)
+  		# kinit Administrator@AD.DOMAIN
+  		# adcli update -C --computer-password-lifetime=0 -D ad.domain
+
+	b) Leave and rejoin the domain with realmd
+  		# cp /etc/sssd/sssd.conf /tmp/sssd.bak
+  		# realm leave
+  		# rm /etc/krb5.keytab
+	c) Leave and rejoin the domain with adcli
+  		# cp /etc/sssd/sssd.conf /tmp/sssd.bak
+  		# adcli delete-computer --domain=ad.domain hostname
+  		# adcli join ad.domain
+
+Validation:
+	keytab and KVNO version
+  		# kinit -k 'HOSTNAME$'   ## This should work. (your HOSTNAME in UPPER CASE)
+  		# klist
+  		# klist -kte
+  		# kinit -C <aduser>@AD.DOMAIN
+  		# kvno 'HOSTNAME$'       ## kvno version should match with the current keytab table.
+
